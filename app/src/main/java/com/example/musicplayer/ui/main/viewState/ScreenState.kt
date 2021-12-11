@@ -1,4 +1,4 @@
-package com.example.musicplayer.viewState
+package com.example.musicplayer.ui.main.viewState
 
 sealed class ScreenState {
     object Music: ScreenState()

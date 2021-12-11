@@ -1,21 +1,25 @@
-package com.example.musicplayer
+package com.example.musicplayer.ui.main
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
-import com.example.musicplayer.ui.components.MenuView
+import androidx.lifecycle.lifecycleScope
+import com.example.musicplayer.ui.main.components.MenuView
 import com.example.musicplayer.ui.theme.MusicPlayerTheme
+import com.example.musicplayer.ui.main.viewState.ScreenState
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by lazy {
@@ -31,9 +35,20 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colors.background,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    MenuView(viewModel)
+                    Scaffold {
+                        Column {
+                            MenuView(viewModel)
+                            lifecycleScope.launch {
+                                viewModel.currentScreenState.collect{
+                                    when(it){
+                                        is ScreenState.Music -> { Log.d("Menu","Music")}
+                                        is ScreenState.Speakers -> { Log.d("Menu","Speakers")}
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-
             }
         }
     }

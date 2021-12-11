@@ -1,4 +1,4 @@
-package com.example.musicplayer.ui.components
+package com.example.musicplayer.ui.main.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,21 +11,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.musicplayer.MainIntent
-import com.example.musicplayer.MainViewModel
+import com.example.musicplayer.ui.main.MainIntent
+import com.example.musicplayer.ui.main.MainViewModel
 import com.example.musicplayer.ui.theme.MusicPlayerTheme
-import com.example.musicplayer.viewState.ScreenState
+import com.example.musicplayer.ui.main.viewState.ScreenState
 import kotlinx.coroutines.launch
 
 enum class Navigation(
@@ -42,7 +39,7 @@ enum class Navigation(
 fun MenuView(viewModel: MainViewModel) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState(0)
-    val activeScreen = viewModel.currentScreenState.observeAsState()
+    val activeScreen = viewModel.currentScreenState.collectAsState()
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

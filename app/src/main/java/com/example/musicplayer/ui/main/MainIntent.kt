@@ -1,4 +1,4 @@
-package com.example.musicplayer
+package com.example.musicplayer.ui.main
 
 sealed class MainIntent {
     object NavigateToMusic: MainIntent()

@@ -1,11 +1,11 @@
-package com.example.musicplayer
+package com.example.musicplayer.ui.main
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.musicplayer.viewState.ScreenState
+import com.example.musicplayer.ui.main.viewState.ScreenState
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
@@ -13,8 +13,8 @@ import kotlinx.coroutines.launch
 class MainViewModel : ViewModel() {
     val mainIntent = Channel<MainIntent>(Channel.UNLIMITED)
 
-    private val _currentScreenState = MutableLiveData<ScreenState>(ScreenState.Music)
-    val currentScreenState: LiveData<ScreenState>
+    private val _currentScreenState = MutableStateFlow<ScreenState>(ScreenState.Music)
+    val currentScreenState: StateFlow<ScreenState>
         get() = _currentScreenState
 
     init {
@@ -25,8 +25,8 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             mainIntent.consumeAsFlow().collect {
                 when(it){
-                    is MainIntent.NavigateToMusic -> _currentScreenState.postValue(ScreenState.Music)
-                    is MainIntent.NavigateToSpeakers -> _currentScreenState.postValue(ScreenState.Speakers)
+                    is MainIntent.NavigateToMusic -> _currentScreenState.emit(ScreenState.Music)
+                    is MainIntent.NavigateToSpeakers -> _currentScreenState.emit(ScreenState.Speakers)
                 }
             }
         }
