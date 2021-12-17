@@ -1,11 +1,13 @@
 package com.example.musicplayer.ui.main
 
 import android.app.Application
+import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayer.data.model.AudioModel
 import com.example.musicplayer.data.repository.AudioRepository
+import com.example.musicplayer.service.PlayerService
 import com.example.musicplayer.ui.domain.BaseViewModel
 import com.example.musicplayer.ui.main.viewState.ScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,6 +46,7 @@ class MainViewModel @Inject constructor(
                     is MainIntent.NavigateToMusic -> _currentScreenState.emit(ScreenState.Music)
                     is MainIntent.NavigateToSpeakers -> _currentScreenState.emit(ScreenState.Speakers)
                     is MainIntent.NavigateToSettings -> TODO()
+                    MainIntent.Pause -> stopPlaying()
                 }
             }
         }
@@ -57,6 +60,10 @@ class MainViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun stopPlaying(){
+        context.sendBroadcast(Intent(PlayerService.Action.PLAY_PAUSE.name))
     }
 
 }

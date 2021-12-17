@@ -13,7 +13,8 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class PlayerService : Service() {
     enum class Action {
-        CHANGE_TRACK
+        CHANGE_TRACK,
+        PLAY_PAUSE
     }
 
     enum class BroadcastParam {
@@ -22,17 +23,27 @@ class PlayerService : Service() {
 
     private var mediaPlayer: MediaPlayer? = null
 
-    private val broadcastReceiver = object : BroadcastReceiver() {
+    private val trackBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val path = intent.getStringExtra(BroadcastParam.PATH.name)
             if (path != null) play(path)
         }
     }
 
+    private val playPauseBroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if(mediaPlayer?.isPlaying == true) {
+                mediaPlayer?.pause()
+            } else {
+                mediaPlayer?.start()
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
-        // TODO: remove hardcoding action
-        registerReceiver(broadcastReceiver, IntentFilter(Action.CHANGE_TRACK.name))
+        registerReceiver(trackBroadcastReceiver, IntentFilter(Action.CHANGE_TRACK.name))
+        registerReceiver(playPauseBroadcastReceiver, IntentFilter(Action.PLAY_PAUSE.name) )
     }
 
     override fun onBind(intent: Intent?): IBinder? {
