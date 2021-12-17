@@ -1,4 +1,4 @@
-package com.example.musicplayer.ui.main.components
+package com.example.musicplayer.ui.main.viewComponent
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,11 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.musicplayer.ui.main.MainIntent
 import com.example.musicplayer.ui.main.MainViewModel
-import com.example.musicplayer.ui.theme.MusicPlayerTheme
 import com.example.musicplayer.ui.main.viewState.ScreenState
 import kotlinx.coroutines.launch
 
@@ -99,10 +97,13 @@ private fun MenuButton(text: String, isActive: Boolean, clickFunc: () -> Unit) {
 }
 
 
+// TODO
+/*
 @Composable
 @Preview
 private fun MenuView_Preview() {
     MusicPlayerTheme {
-        MenuView(MainViewModel())
+        MenuView(hiltViewModel())
     }
 }
+ */
