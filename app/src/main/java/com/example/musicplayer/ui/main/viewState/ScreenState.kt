@@ -1,7 +1,7 @@
 package com.example.musicplayer.ui.main.viewState
 
-sealed class ScreenState {
-    object Music: ScreenState()
-    object Speakers: ScreenState()
-    object Settings: ScreenState()
+sealed class ScreenState(val value:String) {
+    object Music: ScreenState("Music")
+    object Speakers: ScreenState("Speakers")
+    object Settings: ScreenState("Settings")
 }

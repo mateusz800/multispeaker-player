@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.musicplayer.ui.main.viewComponent.MenuView
 import com.example.musicplayer.ui.fragment.browseMusic.MusicView
+import com.example.musicplayer.ui.fragment.speakers.SpeakersView
 import com.example.musicplayer.ui.main.viewComponent.PlayerView
 import com.example.musicplayer.ui.theme.MusicPlayerTheme
 
@@ -37,7 +38,7 @@ fun MainView(viewModel: MainViewModel) {
         ) {
             Scaffold(bottomBar = { PlayerView(hiltViewModel()) }) {
                 Column {
-                    MenuView(viewModel)
+                    MenuView(viewModel, navController)
                     NavHost(
                         navController = navController,
                         startDestination = Destinations.MUSIC.value
@@ -45,7 +46,9 @@ fun MainView(viewModel: MainViewModel) {
                         composable(Destinations.MUSIC.value) {
                             MusicView(hiltViewModel())
                         }
-                        composable(Destinations.SPEAKERS.value) { Text("Speakers screen") }
+                        composable(Destinations.SPEAKERS.value) {
+                            SpeakersView(hiltViewModel())
+                        }
                         /*...*/
                     }
                 }

@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.musicplayer.ui.main.Destinations
 import com.example.musicplayer.ui.main.MainIntent
 import com.example.musicplayer.ui.main.MainViewModel
 import com.example.musicplayer.ui.main.viewState.ScreenState
@@ -26,15 +28,16 @@ import kotlinx.coroutines.launch
 enum class Navigation(
     val title: String,
     val state: ScreenState,
-    val intentAction: MainIntent
+    val intentAction: MainIntent,
+    val destination: String
 ) {
-    MUSIC("Music", ScreenState.Music, MainIntent.NavigateToMusic),
-    SPEAKERS("Speakers", ScreenState.Speakers, MainIntent.NavigateToSpeakers),
-    SETTINGS("Settings", ScreenState.Settings, MainIntent.NavigateToSettings)
+    MUSIC("Music", ScreenState.Music, MainIntent.NavigateToMusic, Destinations.MUSIC.name),
+    SPEAKERS("Speakers", ScreenState.Speakers, MainIntent.NavigateToSpeakers, Destinations.SPEAKERS.name),
+    SETTINGS("Settings", ScreenState.Settings, MainIntent.NavigateToSettings, Destinations.MUSIC.name)
 }
 
 @Composable
-fun MenuView(viewModel: MainViewModel) {
+fun MenuView(viewModel: MainViewModel, navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState(0)
     val activeScreen = viewModel.currentScreenState.collectAsState()
@@ -56,7 +59,9 @@ fun MenuView(viewModel: MainViewModel) {
                         text = it.title,
                         isActive = activeScreen.value == it.state,
                         clickFunc = {
+
                             coroutineScope.launch {
+                                navController.navigate(it.destination, null, null)
                                 viewModel.mainIntent.send(it.intentAction)
                             }
                         })

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Button
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,7 +41,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PlayerView(viewModel: MainViewModel) {
     val currentTrack = viewModel.currentTrack.observeAsState()
-    if(currentTrack.value != null) {
+    if (currentTrack.value != null) {
         PlayerView(currentTrack.value!!, viewModel.mainIntent)
     }
 }
@@ -81,16 +83,18 @@ private fun PlayerView(currentTrack: AudioModel, intent: Channel<MainIntent>) {
                     )
                 }
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    Icon(
-                        Icons.Rounded.Pause,
-                        contentDescription = "Pause button",
-                        tint = MaterialTheme.colors.onPrimary,
-                        modifier = Modifier.clickable {
-                            coroutineScope.launch {
-                                intent.send(MainIntent.Pause)
-                            }
+                    Button(onClick = {
+                        coroutineScope.launch {
+                            intent.send(MainIntent.Pause)
                         }
-                    )
+                    }, modifier = Modifier.testTag("pauseButton")) {
+                        Icon(
+                            Icons.Rounded.Pause,
+                            contentDescription = "Pause button",
+                            tint = MaterialTheme.colors.onPrimary,
+                        )
+                    }
+
                 }
             }
 
@@ -116,6 +120,6 @@ private fun Cover() {
 @Composable
 private fun Player_Preview() {
     MusicPlayerTheme {
-        PlayerView(AudioModel("some/path", "Song title"), Channel {  })
+        PlayerView(AudioModel("some/path", "Song title"), Channel { })
     }
 }

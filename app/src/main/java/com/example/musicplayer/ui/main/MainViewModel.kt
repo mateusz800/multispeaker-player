@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.Navigation
 import com.example.musicplayer.data.model.AudioModel
 import com.example.musicplayer.data.repository.AudioRepository
 import com.example.musicplayer.service.PlayerService
@@ -41,6 +42,7 @@ class MainViewModel @Inject constructor(
 
     private fun handleIntent() {
         viewModelScope.launch {
+
             mainIntent.consumeAsFlow().collect {
                 when (it) {
                     is MainIntent.NavigateToMusic -> _currentScreenState.emit(ScreenState.Music)

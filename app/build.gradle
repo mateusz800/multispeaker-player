@@ -15,7 +15,8 @@ android {
         versionCode 1
         versionName "1.0"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        //testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.example.musicplayer.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary true
         }
@@ -69,7 +70,20 @@ dependencies {
     // dependency injection
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0-beta01'
     implementation("com.google.dagger:hilt-android:2.38.1")
+
     kapt("com.google.dagger:hilt-android-compiler:2.38.1")
+    testImplementation("com.google.dagger:hilt-android-testing:2.38.1")
+    kaptTest("com.google.dagger:hilt-android-compiler:2.38.1")
+    testAnnotationProcessor("com.google.dagger:hilt-android-compiler:2.38.1")
+
+    implementation 'androidx.test:rules:1.3.0'
+
+    // For instrumented tests.
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.38.1")
+    // ...with Kotlin.
+    kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.38.1")
+    // ...with Java.
+    androidTestAnnotationProcessor("com.google.dagger:hilt-android-compiler:2.38.1")
 
     // icons
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
@@ -79,6 +93,10 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+    debugImplementation("androidx.compose.ui:ui-test-manifest:$compose_version")
+
+
+
 
     // detect memory leaks
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
