@@ -35,7 +35,7 @@ private fun SpeakersView(
         availableDevices?.forEach {
             Button(onClick = {
                 coroutineScope.launch {
-                    intent.send(SpeakersIntent.Connect(it.host))
+                    intent.send(SpeakersIntent.Connect(it.deviceAddress))
                 }
             }) {
                 Text(it.name)
@@ -47,6 +47,6 @@ private fun SpeakersView(
 @Preview
 @Composable
 private fun SpeakersView_Preview() {
-    val availableDevices = listOf(DeviceModel("Sony XA", "192.168.0.168"))
+    val availableDevices = listOf(DeviceModel("Sony XA", "fd:fg:d8:j9","192.168.0.168"))
     SpeakersView(null, availableDevices, Channel { })
 }

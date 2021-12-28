@@ -22,9 +22,10 @@ import com.example.musicplayer.R
 import kotlinx.coroutines.Dispatchers
 import java.io.*
 import java.lang.IndexOutOfBoundsException
-import java.net.URL
 import android.media.MediaFormat
 import android.media.MediaCodec
+import android.os.NetworkOnMainThreadException
+import java.net.*
 import java.nio.ByteBuffer
 
 
@@ -43,10 +44,12 @@ class PlayerService : Service() {
     @Inject
     lateinit var deviceRepository: DeviceRepository
 
-
     private var connectedDevices: List<DeviceModel> = listOf()
 
-    //private var mediaPlayer: MediaPlayer = MediaPlayer()
+    private val sampleRate = 44100
+    private var bufferSize: Int = 512
+    private lateinit var audioTrack: AudioTrack
+
     private var currentMediaSourcePath: String? = null
 
     private val trackBroadcastReceiver = object : BroadcastReceiver() {
@@ -58,30 +61,20 @@ class PlayerService : Service() {
 
     private val playPauseBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            /*
-            if (mediaPlayer.isPlaying) {
-                mediaPlayer.pause()
-            } else {
-                mediaPlayer.start()
-            }
 
-             */
         }
     }
 
     init {
-       // mediaPlayer.setOnPreparedListener { startPlaying() }
         collectConnectedDevices()
+        initializeAudioTrack()
+        MainScope().launch(Dispatchers.IO) {
+            startAudioServer()
+        }
     }
 
-
-
-    private fun startPlaying() {
-        //mediaPlayer.start()
-        //val streamer = AudioSender(this, connectedDevices[0].host, 8888)
-        //streamer.stream(currentMediaSourcePath!!)
-        val sampleRate = 44100
-        var bufferSize = AudioTrack.getMinBufferSize(
+    private fun initializeAudioTrack() {
+        bufferSize = AudioTrack.getMinBufferSize(
             sampleRate, AudioFormat.CHANNEL_OUT_MONO,
             AudioFormat.ENCODING_PCM_16BIT
         )
@@ -89,8 +82,8 @@ class PlayerService : Service() {
             bufferSize = sampleRate * 2;
         }
         // AudioTrack needs the buffer size in bytes (Short uses 2 bytes)
-        bufferSize *= 2
-        val audioTrack: AudioTrack = AudioTrack.Builder()
+        //bufferSize *= 2
+        audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -105,32 +98,80 @@ class PlayerService : Service() {
                     .build()
             )
             .setTransferMode(AudioTrack.MODE_STREAM)
-            .setBufferSizeInBytes(bufferSize*2)
+            .setBufferSizeInBytes(bufferSize * 2)
             .build()
-        if(audioTrack.state == AudioTrack.STATE_UNINITIALIZED){
+        if (audioTrack.state == AudioTrack.STATE_UNINITIALIZED) {
             Log.e("PlayerService", "Audio track uninitialized")
         }
+    }
 
-
-        val stream = URL("https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_10MG.wav").openStream()
-        //val stream = resources.openRawResource(R.raw.sample)
-        //val stream = FileInputStream(currentMediaSourcePath)
-        val bufferedInputStream = BufferedInputStream(stream)
-        val dataStream = TTSInputStream(bufferedInputStream)
-        //val dataStream = DataInputStream(bufferedInputStream)
-        //val bufferSize = 512
-        val buffer = ByteArray(bufferSize)
-        var i = 0
-        audioTrack.play()
-        dataStream.use {
-            i = dataStream.read(buffer, 0, bufferSize)
-            while (i > 0) {
-                audioTrack.write(buffer, 0, buffer.size)
+    private fun startAudioServer() {
+        val serverSocket = ServerSocket(8888)
+        return serverSocket.use {
+            val client = serverSocket.accept()
+            val dataStream = client.getInputStream()
+            val buffer = ByteArray(bufferSize)
+            var i: Int
+            audioTrack.play()
+            dataStream.use {
                 i = dataStream.read(buffer, 0, bufferSize)
+                while (i > 0) {
+                    audioTrack.write(buffer, 0, buffer.size)
+                    i = dataStream.read(buffer, 0, bufferSize)
+                }
             }
+            audioTrack.stop()
         }
-        audioTrack.stop()
-        audioTrack.release()
+    }
+
+
+    private fun startPlaying() {
+        //val streamer = AudioSender(this, connectedDevices[0].host, 8888)
+        MainScope().launch(Dispatchers.IO) {
+            val stream = resources.openRawResource(R.raw.sample)
+            var socket: Socket? = null
+
+            try {
+                if (connectedDevices.isNotEmpty()) {
+                    socket = Socket()
+                    //socket.setPerformancePreferences(1, 0, 0)
+                    socket.bind(null)
+                    val host = connectedDevices[0].ipAddress
+                    Log.d("PlayerService", "Connecting to $host:8888")
+                    socket.connect((InetSocketAddress(host, 8888)), 500)
+                    Log.d("PlayerService", "Connected to $host : ${socket.isConnected}")
+                }
+            } catch (e: UnknownHostException) {
+                Log.d("PlayerService", "Cannot connect to host - unknown host")
+            } catch (e: NetworkOnMainThreadException) {
+                Log.d("PlayerService", "Cannot connect to host - network exception")
+            } catch (e: ConnectException) {
+                Log.d("PlayerService", "Cannot connect to host - connection refused")
+            }
+
+            //val stream = URL("https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_10MG.wav").openStream()
+
+            //val stream = FileInputStream(currentMediaSourcePath)
+            val dataStream = DataInputStream(stream)
+            val buffer = ByteArray(bufferSize)
+            var i: Int
+            audioTrack.play()
+            dataStream.use {
+                val dos =
+                    if (socket != null && socket.isConnected) DataOutputStream(socket.getOutputStream()) else null
+                i = dataStream.read(buffer, 0, bufferSize)
+                while (i > 0) {
+                    audioTrack.write(buffer, 0, buffer.size)
+                    dos?.write(buffer, 0, buffer.size)
+                    i = dataStream.read(buffer, 0, bufferSize)
+
+                }
+                dos?.close()
+            }
+            audioTrack.stop()
+            audioTrack.release()
+        }
+
     }
 
     private fun collectConnectedDevices() {
@@ -153,18 +194,10 @@ class PlayerService : Service() {
         return null
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        //mediaPlayer.release()
-    }
-
     private fun startTrack(trackPath: String) {
-       //mediaPlayer.reset()
         currentMediaSourcePath = trackPath
-        //mediaPlayer.setDataSource(this, Uri.parse(trackPath))
-        //mediaPlayer.prepareAsync()
-        MainScope().launch(Dispatchers.IO) {
-            startPlaying()
-        }
+
+        startPlaying()
+
     }
 }

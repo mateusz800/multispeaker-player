@@ -124,7 +124,11 @@ class SpeakerViewModel @Inject constructor(
             manager.connect(channel, config, object : WifiP2pManager.ActionListener {
 
                 override fun onSuccess() {
-                    deviceRepository.addConnectedDevice(deviceAddress)
+                    manager.requestConnectionInfo(channel, WifiP2pManager.ConnectionInfoListener { info ->
+                        val ipAddress = info.groupOwnerAddress.hostAddress
+                        deviceRepository.addConnectedDevice(deviceAddress, ipAddress)
+                    })
+
                 }
 
                 override fun onFailure(reason: Int) {

@@ -74,11 +74,12 @@ class DeviceRepository(
                 if (list.isNotEmpty()) {
                     val deviceList = mutableListOf<DeviceModel>()
                     list.forEach { wifiP2pDevice ->
-                        if (connectedDevices.value?.find { it.host == wifiP2pDevice.deviceAddress } == null) {
+                        if (connectedDevices.value?.find { it.deviceAddress == wifiP2pDevice.deviceAddress } == null) {
                             deviceList.add(
                                 DeviceModel(
                                     wifiP2pDevice.deviceName,
-                                    wifiP2pDevice.deviceAddress
+                                    wifiP2pDevice.deviceAddress,
+                                    null
                                 )
                             )
                         }
@@ -91,9 +92,10 @@ class DeviceRepository(
         }
     }
 
-    fun addConnectedDevice(deviceAddress: String) {
+    fun addConnectedDevice(deviceAddress: String, ipAddress: String) {
         MainScope().launch {
-            val connectedDevice = availableDevices.value?.find { it.host == deviceAddress }
+            val connectedDevice = availableDevices.value?.find { it.deviceAddress == deviceAddress }
+            connectedDevice?.ipAddress = ipAddress
             if (connectedDevice != null) {
                 var newConnectedList = connectedDevices.value?.toMutableList()
                 if (newConnectedList == null) newConnectedList = mutableListOf()
