@@ -5,6 +5,7 @@ import android.net.wifi.p2p.WifiP2pManager
 import android.os.Looper
 import com.example.musicplayer.data.repository.AudioRepository
 import com.example.musicplayer.data.repository.DeviceRepository
+import com.example.musicplayer.data.repository.PlayerStateRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,13 +24,7 @@ class ApplicationModule {
 
     @Singleton
     @Provides
-    fun provideP2pManager(@ApplicationContext context: Context) =
-        context.getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
-
-    @Singleton
-    @Provides
-    fun provideP2pChannel(@ApplicationContext context: Context): WifiP2pManager.Channel =
-        provideP2pManager(context).initialize(context, Looper.getMainLooper(), null)
+    fun providePlayerStateRepository() = PlayerStateRepository()
 
     @Singleton
     @Provides
@@ -40,6 +35,19 @@ class ApplicationModule {
     ): DeviceRepository {
         return DeviceRepository(context, manager, channel)
     }
+
+    @Singleton
+    @Provides
+    fun provideP2pManager(@ApplicationContext context: Context) =
+        context.getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
+
+    @Singleton
+    @Provides
+    fun provideP2pChannel(@ApplicationContext context: Context): WifiP2pManager.Channel =
+        provideP2pManager(context).initialize(context, Looper.getMainLooper(), null)
+
+
+
 
 
 }

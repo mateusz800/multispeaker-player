@@ -25,6 +25,8 @@ import java.lang.IndexOutOfBoundsException
 import android.media.MediaFormat
 import android.media.MediaCodec
 import android.os.NetworkOnMainThreadException
+import com.example.musicplayer.data.repository.PlayerStateRepository
+import kotlinx.coroutines.Job
 import java.net.*
 import java.nio.ByteBuffer
 
@@ -38,51 +40,58 @@ class PlayerService : Service() {
     }
 
     enum class BroadcastParam {
-        PATH
+        PATH, BITRATE
     }
 
     @Inject
     lateinit var deviceRepository: DeviceRepository
 
+    @Inject
+    lateinit var playerStateRepository: PlayerStateRepository
+
+    private var playJob: Job? = null
+
     private var connectedDevices: List<DeviceModel> = listOf()
 
-    private val sampleRate = 44100
     private var bufferSize: Int = 512
     private lateinit var audioTrack: AudioTrack
 
-    private var currentMediaSourcePath: Uri? = null
+
 
     private val trackBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val path:Uri? = intent.getParcelableExtra(BroadcastParam.PATH.name)
-            if (path != null) startTrack(path)
+            val bitrate:Int = intent.getIntExtra(BroadcastParam.BITRATE.name, 44100)
+            if (path != null) startTrack(path, bitrate)
         }
     }
 
     private val playPauseBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-
+            if(audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING){
+                audioTrack.pause()
+            } else{
+                audioTrack.play()
+            }
+            playerStateRepository.togglePause()
         }
     }
 
     init {
         collectConnectedDevices()
-        initializeAudioTrack()
         MainScope().launch(Dispatchers.IO) {
             startAudioServer()
         }
     }
 
-    private fun initializeAudioTrack() {
+    private fun initializeAudioTrack(bitrate: Int) {
         bufferSize = AudioTrack.getMinBufferSize(
-            sampleRate, AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT
+            bitrate, AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_MP3
         )
         if (bufferSize == AudioTrack.ERROR || bufferSize == AudioTrack.ERROR_BAD_VALUE) {
-            bufferSize = sampleRate * 2;
+            bufferSize = bitrate * 2;
         }
-        // AudioTrack needs the buffer size in bytes (Short uses 2 bytes)
-        //bufferSize *= 2
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -93,7 +102,7 @@ class PlayerService : Service() {
             .setAudioFormat(
                 AudioFormat.Builder()
                     .setEncoding(AudioFormat.ENCODING_MP3)
-                    .setSampleRate(sampleRate)
+                    .setSampleRate(bitrate)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                     .build()
             )
@@ -121,17 +130,14 @@ class PlayerService : Service() {
                     i = dataStream.read(buffer, 0, bufferSize)
                 }
             }
-            audioTrack.stop()
         }
     }
 
 
-    private fun startPlaying() {
-        //val streamer = AudioSender(this, connectedDevices[0].host, 8888)
-        MainScope().launch(Dispatchers.IO) {
-            //val stream = resources.openRawResource(R.raw.sample)
+    private fun startPlaying(trackPath: Uri, bitrate: Int) {
+        initializeAudioTrack(bitrate)
+        playJob = MainScope().launch(Dispatchers.IO) {
             var socket: Socket? = null
-
             try {
                 if (connectedDevices.isNotEmpty()) {
                     socket = Socket()
@@ -149,11 +155,7 @@ class PlayerService : Service() {
             } catch (e: ConnectException) {
                 Log.d("PlayerService", "Cannot connect to host - connection refused")
             }
-
-            //val stream = URL("https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_10MG.wav").openStream()
-            Log.d("Player", "$currentMediaSourcePath")
-            //val stream = FileInputStream(currentMediaSourcePath)
-            val stream = contentResolver.openInputStream(currentMediaSourcePath!!)
+            val stream = contentResolver.openInputStream(trackPath)
             val dataStream = DataInputStream(stream)
             val buffer = ByteArray(bufferSize)
             var i: Int
@@ -162,18 +164,19 @@ class PlayerService : Service() {
                 val dos =
                     if (socket != null && socket.isConnected) DataOutputStream(socket.getOutputStream()) else null
                 i = dataStream.read(buffer, 0, bufferSize)
-                while (i > 0) {
-                    audioTrack.write(buffer, 0, buffer.size)
-                    dos?.write(buffer, 0, buffer.size)
-                    i = dataStream.read(buffer, 0, bufferSize)
-
+                while (i > 0 && playJob!!.isActive) {
+                    if(audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                        audioTrack.write(buffer, 0, buffer.size)
+                        dos?.write(buffer, 0, buffer.size)
+                        i = dataStream.read(buffer, 0, bufferSize)
+                    }
                 }
                 dos?.close()
             }
-            audioTrack.stop()
-            audioTrack.release()
+            if(audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                audioTrack.stop()
+            }
         }
-
     }
 
     private fun collectConnectedDevices() {
@@ -196,10 +199,17 @@ class PlayerService : Service() {
         return null
     }
 
-    private fun startTrack(trackPath: Uri) {
-        currentMediaSourcePath = trackPath
+    private fun startTrack(trackPath: Uri, bitrate:Int) {
+        stopCurrentTrack()
+        startPlaying(trackPath, bitrate)
+    }
 
-        startPlaying()
-
+    private fun stopCurrentTrack(){
+        playJob?.cancel()
+        if(this::audioTrack.isInitialized) {
+            audioTrack.pause()
+            audioTrack.flush()
+            audioTrack.release()
+        }
     }
 }

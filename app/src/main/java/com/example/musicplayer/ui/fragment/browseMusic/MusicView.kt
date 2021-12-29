@@ -82,7 +82,8 @@ fun MusicView_Preview() {
                 add(
                     AudioModel(
                         name = "Send Me Love",
-                        path = android.net.Uri.EMPTY
+                        path = android.net.Uri.EMPTY,
+                        artist = "Jane Kramer"
                     )
                 )
             }

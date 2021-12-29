@@ -24,15 +24,7 @@ import android.webkit.MimeTypeMap
 
 class AudioRepository(private val context: Context) {
 
-    private val _recentTrack = MutableStateFlow<AudioModel?>(null)
-    val recentTrack: StateFlow<AudioModel?>
-        get() = _recentTrack
 
-    fun updateRecentTrack(model: AudioModel){
-        MainScope().launch {
-            _recentTrack.emit(model)
-        }
-    }
 
     @RequiresApi(Build.VERSION_CODES.Q)
     fun getAllAudioFromDevice(): List<AudioModel> {
@@ -46,7 +38,8 @@ class AudioRepository(private val context: Context) {
             MediaStore.Audio.AudioColumns._ID,
             MediaStore.Audio.AudioColumns.TITLE,
             MediaStore.Audio.AudioColumns.ALBUM,
-            MediaStore.Audio.ArtistColumns.ARTIST
+            MediaStore.Audio.ArtistColumns.ARTIST,
+            MediaStore.Audio.AudioColumns.BITRATE
         )
         val c: Cursor? = context.contentResolver.query(
             uri,
@@ -57,14 +50,16 @@ class AudioRepository(private val context: Context) {
         )
         if (c != null) {
             while (c.moveToNext()) {
-                //TOOD change path
                 val path: Uri= ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, c.getLong(0))
                 val name: String = c.getString(1)
-                val artist: String = c.getString(2)
+                val artist: String = c.getString(3)
+                val bitrate: Int = c.getInt(4)
                 val audioModel =
                     AudioModel(
                         name = name,
-                        path = path
+                        path = path,
+                        artist = artist,
+                        bitrate = bitrate
                     )
                 tempAudioList.add(audioModel)
             }

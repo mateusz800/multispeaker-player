@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.lifecycle.*
 import com.example.musicplayer.data.model.AudioModel
 import com.example.musicplayer.data.repository.AudioRepository
+import com.example.musicplayer.data.repository.PlayerStateRepository
 import com.example.musicplayer.ui.domain.BaseViewModel
 import com.example.musicplayer.service.PlayerService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class MusicViewModel @Inject constructor(
     application: Application,
     private val audioRepository: AudioRepository,
+    private val playerStateRepository: PlayerStateRepository
 ) : BaseViewModel(application) {
 
     val intent = Channel<MusicIntent>(Channel.UNLIMITED)
@@ -47,7 +49,7 @@ class MusicViewModel @Inject constructor(
     private fun playTrack(track: AudioModel){
         val intent = Intent(PlayerService.Action.CHANGE_TRACK.name)
         intent.putExtra(PlayerService.BroadcastParam.PATH.name, track.path)
-        audioRepository.updateRecentTrack(track)
+        playerStateRepository.updateCurrentTrack(track)
         context.sendBroadcast(intent)
     }
 }

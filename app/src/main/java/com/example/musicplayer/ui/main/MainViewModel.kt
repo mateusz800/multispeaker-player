@@ -5,9 +5,9 @@ import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.Navigation
 import com.example.musicplayer.data.model.AudioModel
 import com.example.musicplayer.data.repository.AudioRepository
+import com.example.musicplayer.data.repository.PlayerStateRepository
 import com.example.musicplayer.service.PlayerService
 import com.example.musicplayer.ui.domain.BaseViewModel
 import com.example.musicplayer.ui.main.viewState.ScreenState
@@ -23,7 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     application: Application,
-    private val audioRepository: AudioRepository
+    private val playerStateRepository: PlayerStateRepository
 ) : BaseViewModel(application) {
     val mainIntent = Channel<MainIntent>(Channel.UNLIMITED)
 
@@ -34,6 +34,10 @@ class MainViewModel @Inject constructor(
     private val _currentTrack = MutableLiveData<AudioModel>()
     val currentTrack: LiveData<AudioModel>
         get() = _currentTrack
+
+    private val _isPause = MutableLiveData<Boolean>()
+    val isPause: LiveData<Boolean>
+        get() = _isPause
 
     init {
         handleIntent()
@@ -55,8 +59,13 @@ class MainViewModel @Inject constructor(
     }
 
     private fun handlePlayerChanges() {
+        handleCurrentTrackChanges()
+        handlePauseStateChanes()
+    }
+
+    private fun handleCurrentTrackChanges() {
         viewModelScope.launch {
-            audioRepository.recentTrack.collect {
+            playerStateRepository.currentTrack.collect {
                 if (it != null) {
                     _currentTrack.postValue(it)
                 }
@@ -64,7 +73,15 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun stopPlaying(){
+    private fun handlePauseStateChanes() {
+        viewModelScope.launch {
+            playerStateRepository.pauseState.collect {
+                _isPause.postValue(it)
+            }
+        }
+    }
+
+    private fun stopPlaying() {
         context.sendBroadcast(Intent(PlayerService.Action.PLAY_PAUSE.name))
     }
 
