@@ -1,5 +1,6 @@
 package com.example.musicplayer.data.repository
 
+import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
 import android.media.AudioTrack
@@ -16,6 +17,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import java.util.concurrent.Flow
+import android.webkit.MimeTypeMap
+
+
+
 
 class AudioRepository(private val context: Context) {
 
@@ -32,9 +37,13 @@ class AudioRepository(private val context: Context) {
     @RequiresApi(Build.VERSION_CODES.Q)
     fun getAllAudioFromDevice(): List<AudioModel> {
         val tempAudioList: MutableList<AudioModel> = ArrayList()
-        val uri: Uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
+        val uri: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val selectionMimeType = MediaStore.Files.FileColumns.MIME_TYPE + "=?"
+        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension("mp3")
+        val selectionArgsMp3 = arrayOf(mimeType)
+
         val projection = arrayOf(
-            MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.AudioColumns._ID,
             MediaStore.Audio.AudioColumns.TITLE,
             MediaStore.Audio.AudioColumns.ALBUM,
             MediaStore.Audio.ArtistColumns.ARTIST
@@ -42,13 +51,14 @@ class AudioRepository(private val context: Context) {
         val c: Cursor? = context.contentResolver.query(
             uri,
             projection,
-            null,
-            null,
+            selectionMimeType,
+            selectionArgsMp3,
             null
         )
         if (c != null) {
             while (c.moveToNext()) {
-                val path: String= c.getString(0)
+                //TOOD change path
+                val path: Uri= ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, c.getLong(0))
                 val name: String = c.getString(1)
                 val artist: String = c.getString(2)
                 val audioModel =

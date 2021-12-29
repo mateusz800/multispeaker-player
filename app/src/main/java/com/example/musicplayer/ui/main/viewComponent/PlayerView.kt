@@ -1,5 +1,6 @@
 package com.example.musicplayer.ui.main.viewComponent
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -55,12 +56,6 @@ private fun PlayerView(currentTrack: AudioModel, intent: Channel<MainIntent>) {
             .fillMaxWidth()
             .padding(start = 10.dp, end = 0.dp, top = 10.dp, bottom = 10.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.Bottom,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Cover()
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
@@ -97,9 +92,6 @@ private fun PlayerView(currentTrack: AudioModel, intent: Channel<MainIntent>) {
 
                 }
             }
-
-        }
-
     }
 }
 
@@ -107,8 +99,8 @@ private fun PlayerView(currentTrack: AudioModel, intent: Channel<MainIntent>) {
 private fun Cover() {
     Box(
         modifier = Modifier
-            .width(100.dp)
-            .height(100.dp)
+            .width(50.dp)
+            .height(50.dp)
             .background(Melon)
             .zIndex(2f)
         //.shadow(elevation = 2.dp)
@@ -120,6 +112,6 @@ private fun Cover() {
 @Composable
 private fun Player_Preview() {
     MusicPlayerTheme {
-        PlayerView(AudioModel("some/path", "Song title"), Channel { })
+        PlayerView(AudioModel(Uri.EMPTY, "Song title"), Channel { })
     }
 }

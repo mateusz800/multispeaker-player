@@ -1,5 +1,6 @@
 package com.example.musicplayer.ui.fragment.browseMusic
 
+import android.net.Uri
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType.Companion.Uri
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,7 +82,7 @@ fun MusicView_Preview() {
                 add(
                     AudioModel(
                         name = "Send Me Love",
-                        path = ""
+                        path = android.net.Uri.EMPTY
                     )
                 )
             }

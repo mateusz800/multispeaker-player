@@ -50,11 +50,11 @@ class PlayerService : Service() {
     private var bufferSize: Int = 512
     private lateinit var audioTrack: AudioTrack
 
-    private var currentMediaSourcePath: String? = null
+    private var currentMediaSourcePath: Uri? = null
 
     private val trackBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val path = intent.getStringExtra(BroadcastParam.PATH.name)
+            val path:Uri? = intent.getParcelableExtra(BroadcastParam.PATH.name)
             if (path != null) startTrack(path)
         }
     }
@@ -92,7 +92,7 @@ class PlayerService : Service() {
             )
             .setAudioFormat(
                 AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_DEFAULT)
+                    .setEncoding(AudioFormat.ENCODING_MP3)
                     .setSampleRate(sampleRate)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                     .build()
@@ -106,6 +106,7 @@ class PlayerService : Service() {
     }
 
     private fun startAudioServer() {
+
         val serverSocket = ServerSocket(8888)
         return serverSocket.use {
             val client = serverSocket.accept()
@@ -128,7 +129,7 @@ class PlayerService : Service() {
     private fun startPlaying() {
         //val streamer = AudioSender(this, connectedDevices[0].host, 8888)
         MainScope().launch(Dispatchers.IO) {
-            val stream = resources.openRawResource(R.raw.sample)
+            //val stream = resources.openRawResource(R.raw.sample)
             var socket: Socket? = null
 
             try {
@@ -150,8 +151,9 @@ class PlayerService : Service() {
             }
 
             //val stream = URL("https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_10MG.wav").openStream()
-
+            Log.d("Player", "$currentMediaSourcePath")
             //val stream = FileInputStream(currentMediaSourcePath)
+            val stream = contentResolver.openInputStream(currentMediaSourcePath!!)
             val dataStream = DataInputStream(stream)
             val buffer = ByteArray(bufferSize)
             var i: Int
@@ -194,7 +196,7 @@ class PlayerService : Service() {
         return null
     }
 
-    private fun startTrack(trackPath: String) {
+    private fun startTrack(trackPath: Uri) {
         currentMediaSourcePath = trackPath
 
         startPlaying()
