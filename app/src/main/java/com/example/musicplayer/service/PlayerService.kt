@@ -27,6 +27,7 @@ import android.media.MediaCodec
 import android.os.NetworkOnMainThreadException
 import com.example.musicplayer.data.repository.PlayerStateRepository
 import kotlinx.coroutines.Job
+import java.lang.Exception
 import java.net.*
 import java.nio.ByteBuffer
 
@@ -101,7 +102,7 @@ class PlayerService : Service() {
             )
             .setAudioFormat(
                 AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_MP3)
+                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                     .setSampleRate(bitrate)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                     .build()
@@ -118,17 +119,22 @@ class PlayerService : Service() {
 
         val serverSocket = ServerSocket(8888)
         return serverSocket.use {
-            val client = serverSocket.accept()
-            val dataStream = client.getInputStream()
-            val buffer = ByteArray(bufferSize)
-            var i: Int
-            audioTrack.play()
-            dataStream.use {
-                i = dataStream.read(buffer, 0, bufferSize)
-                while (i > 0) {
-                    audioTrack.write(buffer, 0, buffer.size)
+            try {
+                val client = serverSocket.accept()
+                val dataStream = client.getInputStream()
+                initializeAudioTrack(bitrate = 44100)
+                val buffer = ByteArray(bufferSize)
+                var i: Int
+                audioTrack.play()
+                dataStream.use {
                     i = dataStream.read(buffer, 0, bufferSize)
+                    while (i > 0) {
+                        audioTrack.write(buffer, 0, buffer.size)
+                        i = dataStream.read(buffer, 0, bufferSize)
+                    }
                 }
+            } catch(e:Exception){
+                Log.d("Player", "Exception: ${e.localizedMessage}")
             }
         }
     }

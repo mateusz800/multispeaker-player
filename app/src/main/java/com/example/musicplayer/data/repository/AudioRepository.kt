@@ -31,19 +31,22 @@ class AudioRepository(private val context: Context) {
         val tempAudioList: MutableList<AudioModel> = ArrayList()
         val uri: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         val selectionMimeType = MediaStore.Files.FileColumns.MIME_TYPE + "=?"
-        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension("mp3")
+        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension("wav")
         val selectionArgsMp3 = arrayOf(mimeType)
 
-        val projection = arrayOf(
-            MediaStore.Audio.AudioColumns._ID,
-            MediaStore.Audio.AudioColumns.TITLE,
-            MediaStore.Audio.AudioColumns.ALBUM,
-            MediaStore.Audio.ArtistColumns.ARTIST,
-            MediaStore.Audio.AudioColumns.BITRATE
-        )
+        val projection = mutableListOf(
+                MediaStore.Audio.AudioColumns._ID,
+                MediaStore.Audio.AudioColumns.TITLE,
+                MediaStore.Audio.AudioColumns.ALBUM,
+                MediaStore.Audio.ArtistColumns.ARTIST,
+
+            )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            projection.add(MediaStore.Audio.AudioColumns.BITRATE)
+        }
         val c: Cursor? = context.contentResolver.query(
             uri,
-            projection,
+            projection.toTypedArray(),
             selectionMimeType,
             selectionArgsMp3,
             null
@@ -53,7 +56,7 @@ class AudioRepository(private val context: Context) {
                 val path: Uri= ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, c.getLong(0))
                 val name: String = c.getString(1)
                 val artist: String = c.getString(3)
-                val bitrate: Int = c.getInt(4)
+                val bitrate: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) c.getInt(4) else 44100
                 val audioModel =
                     AudioModel(
                         name = name,
