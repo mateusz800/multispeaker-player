@@ -26,6 +26,11 @@ class PlayerStateRepository {
             _pauseState.emit(!(pauseState.value))
         }
     }
+    fun turnOffPause(){
+        MainScope().launch {
+            _pauseState.emit(false)
+        }
+    }
 
 
 }
